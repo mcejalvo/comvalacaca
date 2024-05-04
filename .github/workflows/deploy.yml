@@ -26,7 +26,7 @@ jobs:
         key: ${{ secrets.PI_SSH_KEY }}
         port: 22
         source: "streamlit-app.tar.gz"
-        target: "/home/pi/"
+        target: "/home/mono/"
 
     - name: Load and Run Docker Image
       uses: appleboy/ssh-action@master
