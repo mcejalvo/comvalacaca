@@ -1,0 +1,32 @@
+name: Deploy to Raspberry Pi
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build Docker Image
+      run: docker build -t streamlit-app .
+    - name: Save Docker Image
+      run: docker save streamlit-app | gzip > streamlit-app.tar.gz
+    - name: Copy Image to Raspberry Pi
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.PI_IP }}
+        username: ${{ secrets.PI_USER }}
+        key: ${{ secrets.PI_SSH_KEY }}
+        port: 22
+        source: "streamlit-app.tar.gz"
+        target: "/home/pi/"
+    - name: Load and Run Docker Image
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PI_IP }}
+        username: ${{ secrets.PI_USER }}
+        key: ${{ secrets.PI_SSH_KEY }}
+        port: 22
+        script: |
+          docker load < /home/pi/streamlit-app.tar.gz
+          docker stop streamlit-app || true
+          docker rm streamlit-app || true
+          docker run -d --name streamlit-app -p 8501:8501 streamlit-app
