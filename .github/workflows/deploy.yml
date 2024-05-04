@@ -15,7 +15,7 @@ jobs:
     - name: Setup SSH and Known Hosts
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.PI_SSH_KEY }}" ~/.ssh/id_rsa
+        echo "${{ secrets.PI_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
 
     - name: Copy Image to Raspberry Pi
