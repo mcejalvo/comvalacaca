@@ -51,5 +51,3 @@ def get_discord_data():
 def load_data_from_csv():
     """Load data from a CSV file."""
     return pd.read_csv(CSV_DATA_PATH)
-
-    
