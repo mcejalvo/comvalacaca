@@ -10,6 +10,7 @@ intents.guilds = True
 TOKEN = 'MTIxMzc4ODQ5ODcxNzMxNTExMw.GW9vK6.5CSqpDqLDZxcH6hTmWoZUserPTP2yoNyvH-Y-Y'
 CHANNEL_ID = 757271564977832079
 THREAD_ID = 1205565888183668736
+CSV_DATA_PATH = "data/cacajournal.csv"
 messages = []
 
 class MyBot(discord.Client):
@@ -43,5 +44,13 @@ def get_discord_data():
     df = pd.DataFrame(messages, columns=["name", "message", "timestamp"]).query("message == '💩'")
     df["date"] = pd.to_datetime(df["timestamp"].dt.date)
     df["hour"] = df["timestamp"].dt.hour
-    return df
+    df.to_csv("data/cacajournal.csv", index=False)
+
+
+def load_data_from_csv():
+    """Load data from a CSV file."""
+    return pd.read_csv(CSV_DATA_PATH)
+
+print(load_data_from_csv())
+
     

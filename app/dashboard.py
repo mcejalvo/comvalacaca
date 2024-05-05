@@ -4,8 +4,6 @@ st.set_page_config(layout="wide")
 from plot import *
 import threading
 
-
-
 def get_discord_data():
     def start_bot():
         loop = asyncio.new_event_loop()
@@ -22,11 +20,21 @@ def get_discord_data():
     df = pd.DataFrame(messages, columns=["name", "message", "timestamp"]).query("message == '💩'")
     df["date"] = pd.to_datetime(df["timestamp"].dt.date)
     df["hour"] = pd.to_datetime(df["timestamp"]).dt.hour
+    df.to_csv("data/cacajournal.csv")
     return df
 
 def main():
-    df = get_discord_data()
+    # df = load_data_from_csv()    
+    
+    if st.button("Cargar últimas caquitas"):
+        # This will re-run the get_discord_data() and bypass cache
+        df = get_discord_data()
+    else:
+        df = load_data_from_csv()
+
     st.title('Torre Caca de Control')
+    with st.expander("Ver detalle caquitas"):
+        st.dataframe(df[["name", "message", "timestamp"]])
     st.header("¿Horas preferidas para la Cacación?")
     st.altair_chart(bar_distribution_per_person_chart(df), use_container_width=True)
 
