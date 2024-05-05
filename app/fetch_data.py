@@ -2,12 +2,13 @@ import discord
 import asyncio
 import pandas as pd
 import altair as alt
+import os
 
 intents = discord.Intents.default()
 intents.messages = True
 intents.guilds = True
 
-TOKEN = 'MTIxMzc4ODQ5ODcxNzMxNTExMw.GW9vK6.5CSqpDqLDZxcH6hTmWoZUserPTP2yoNyvH-Y-Y'
+TOKEN = os.getenv("DISCORD_TOKEN")
 CHANNEL_ID = 757271564977832079
 THREAD_ID = 1205565888183668736
 CSV_DATA_PATH = "data/cacajournal.csv"
@@ -50,7 +51,5 @@ def get_discord_data():
 def load_data_from_csv():
     """Load data from a CSV file."""
     return pd.read_csv(CSV_DATA_PATH)
-
-print(load_data_from_csv())
 
     
