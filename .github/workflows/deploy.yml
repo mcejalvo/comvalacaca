@@ -1,45 +1,59 @@
-name: Deploy to Raspberry Pi
-on: [push]
+name: Build, Push and Deploy Streamlit App to Raspberry Pi
+on: 
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest
 
-    - name: Build Docker Image
-      run: docker build -t streamlit-app .
+  deploy-to-raspberry:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH and Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PI_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-    - name: Save Docker Image
-      run: docker save streamlit-app | gzip > streamlit-app.tar.gz
-
-    - name: Setup SSH and Known Hosts
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.PI_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-
-    - name: Copy Image to Raspberry Pi
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.PI_IP }}
-        username: ${{ secrets.PI_USER }}
-        key: ${{ secrets.PI_SSH_KEY }}
-        port: 22
-        source: "streamlit-app.tar.gz"
-        target: "/home/mono/"
-
-    - name: Load and Run Docker Image
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.PI_IP }}
-        username: ${{ secrets.PI_USER }}
-        key: ${{ secrets.PI_SSH_KEY }}
-        port: 22
-        script: |
-          docker load < /home/pi/streamlit-app.tar.gz
-          docker stop streamlit-app || true
-          docker rm streamlit-app || true
-          docker run -d --name streamlit-app -p 8501:8501 streamlit-app
-
-    - name: Test SSH connection
-      run: ssh -i ~/.ssh/id_rsa ${{ secrets.PI_USER }}@${{ secrets.PI_IP }} 'echo SSH connection successful'
+      - name: Pull and Run Docker Image on Raspberry Pi
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PI_IP }}
+          username: ${{ secrets.PI_USER }}
+          key: ${{ secrets.PI_SSH_KEY }}
+          port: 22
+          script: |
+            docker pull ${{ env.IMAGE_NAME }}:latest
+            docker stop streamlit-app || true
+            docker rm streamlit-app || true
+            docker run -d --name streamlit-app -p 8501:8501 ${{ env.IMAGE_NAME }}:latest
