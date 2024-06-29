@@ -3,12 +3,17 @@ import asyncio
 import pandas as pd
 import altair as alt
 import os
+import streamlit as st
+
 
 intents = discord.Intents.default()
 intents.messages = True
 intents.guilds = True
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = st.secrets["TOKEN"]
+if not TOKEN:
+    raise ValueError("Discord token not found")
+
 CHANNEL_ID = 757271564977832079
 THREAD_ID = 1205565888183668736
 CSV_DATA_PATH = "data/cacajournal.csv"

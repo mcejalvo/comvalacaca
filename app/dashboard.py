@@ -1,9 +1,8 @@
-import streamlit as st
-st.set_page_config(layout="wide")
 
 from plot import *
 import threading
 
+st.set_page_config(layout="wide")
 def get_discord_data():
     def start_bot():
         loop = asyncio.new_event_loop()
